@@ -12,11 +12,11 @@ This is an implementation using Annotation Processor to provide a solution
 
 ### Template Class
 ```java
-public static class StaticTemplate {
-		public static InterfaceRequiresStatic create(String arg) {
-			throw new NoSuchMethodError("create");
-		}
-	}
+public class StaticTemplate {
+    public static InterfaceRequiresStatic create(String arg) {
+        throw new NoSuchMethodError("create");
+    }
+}
 ```
 
 ### Interface 
@@ -25,7 +25,6 @@ public static class StaticTemplate {
 @RequiresStatic(StaticTemplate.class)
 public interface InterfaceRequiresStatic {
     String someMethod();
-
     void otherMethod(String arg);
 }
 ```
@@ -33,7 +32,7 @@ public interface InterfaceRequiresStatic {
 ### Implementation
 ```java
 
-public static class MyClass implements InterfaceRequiresStatic {
+public class MyClass implements InterfaceRequiresStatic {
     @Override
     public String someMethod() {
         return null;
