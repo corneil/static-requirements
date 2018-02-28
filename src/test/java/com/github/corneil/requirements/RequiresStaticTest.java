@@ -53,7 +53,12 @@ public class RequiresStaticTest {
 
 	@Test(expected = RequiresStaticException.class)
 	public void testBad() throws RequiresStaticException {
-		Assert.assertFalse(RequiresStaticSupport.checkClass(BadAttempt.class));
+		try {
+			Assert.assertFalse(RequiresStaticSupport.checkClass(BadAttempt.class));
+		} catch (RequiresStaticException x) {
+			System.err.println("Expected:" + x.toString());
+			throw x;
+		}
 	}
 
 }
