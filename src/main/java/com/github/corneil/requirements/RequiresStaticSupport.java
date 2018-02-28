@@ -8,7 +8,7 @@ import java.util.Collection;
 import java.util.List;
 
 public class RequiresStaticSupport {
-	public static String makeSignature(Method method) {
+	private static String makeSignature(Method method) {
 		StringBuilder builder = new StringBuilder();
 		if (Modifier.isPublic(method.getModifiers())) {
 			builder.append("public ");
@@ -101,6 +101,13 @@ public class RequiresStaticSupport {
 		return result;
 	}
 
+	/**
+	 * This method can be used to verify the requirement that a class implements static methods like a supplied template class.
+	 *
+	 * @param checkMe
+	 * @return true if the class hierarchy has one or RequireStatic annotations and each of their requirements are met. Will return false if the class has no annotations.
+	 * @throws RequiresStaticException if any of the requirements are not met.
+	 */
 	public static boolean checkClass(Class<?> checkMe) throws RequiresStaticException {
 		for (Class<?> templateClass : findRequestStaticClass(checkMe)) {
 			for (Method method : templateClass.getMethods()) {

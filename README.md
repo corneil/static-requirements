@@ -49,3 +49,12 @@ public class MyClass implements InterfaceRequiresStatic {
     }
 }
 ```
+
+### Performing Check
+Until the Annotation processor is implemented use the following to check:
+```java
+if(RequiresStaticSupport.checkClass(MyClass.class)) {
+	// use as needed.
+	// an exception will be thrown if the requirement isn't met.
+}
+```

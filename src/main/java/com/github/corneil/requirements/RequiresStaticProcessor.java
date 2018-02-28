@@ -15,6 +15,7 @@ public class RequiresStaticProcessor extends AbstractProcessor {
 	@Override
 	public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
 		for (final Element element : roundEnv.getElementsAnnotatedWith(RequiresStatic.class)) {
+
 		}
 		return true;
 	}
