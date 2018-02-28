@@ -8,6 +8,12 @@ import java.util.Collection;
 import java.util.List;
 
 public class RequiresStaticSupport {
+
+	public static final String S_REQUIRES_METHOD_S_AS_IN_S = "%s requires method %s as in %s";
+
+	private RequiresStaticSupport() {
+	}
+
 	private static String makeSignature(Method method) {
 		StringBuilder builder = new StringBuilder();
 		if (Modifier.isPublic(method.getModifiers())) {
@@ -75,15 +81,14 @@ public class RequiresStaticSupport {
 		if (template == method) {
 			return true;
 		}
-		if (Modifier.isProtected(template) && !Modifier.isProtected(method) && !Modifier.isPublic(method)) {
+		boolean isPublic = Modifier.isPublic(method);
+		boolean isProtected = Modifier.isProtected(method);
+		if (Modifier.isProtected(template) && !isProtected && !isPublic) {
 			return false;
-		} else if (Modifier.isPublic(template) && !Modifier.isPublic(method)) {
+		} else if (Modifier.isPublic(template) && !isPublic) {
 			return false;
 		}
-		if (Modifier.isStatic(template) && !Modifier.isStatic(method)) {
-			return false;
-		}
-		return true;
+		return !(Modifier.isStatic(template) && !Modifier.isStatic(method));
 	}
 
 	private static Collection<Class<?>> findRequestStaticClass(Class<?> checkMe) {
@@ -109,6 +114,7 @@ public class RequiresStaticSupport {
 	 * @throws RequiresStaticException if any of the requirements are not met.
 	 */
 	public static boolean checkClass(Class<?> checkMe) throws RequiresStaticException {
+		boolean foundAny = false;
 		for (Class<?> templateClass : findRequestStaticClass(checkMe)) {
 			for (Method method : templateClass.getMethods()) {
 				if (Modifier.isStatic(method.getModifiers())) {
@@ -116,26 +122,26 @@ public class RequiresStaticSupport {
 						try {
 							Method checkMethod = checkMe.getMethod(method.getName(), method.getParameterTypes());
 							if (!compatibleModifiers(method.getModifiers(), checkMethod.getModifiers())) {
-								throw new RequiresStaticException(String.format("%s requires method %s as in %s", checkMe.getCanonicalName(), makeSignature(method), templateClass.getCanonicalName()));
+								throw new RequiresStaticException(String.format(S_REQUIRES_METHOD_S_AS_IN_S, checkMe.getCanonicalName(), makeSignature(method), templateClass.getCanonicalName()));
 							}
 						} catch (NoSuchMethodException x) {
-							throw new RequiresStaticException(String.format("%s requires method %s as in %s", checkMe.getCanonicalName(), makeSignature(method), templateClass.getCanonicalName()));
+							throw new RequiresStaticException(String.format(S_REQUIRES_METHOD_S_AS_IN_S, checkMe.getCanonicalName(), makeSignature(method), templateClass.getCanonicalName()));
 						}
 					} else {
 						try {
 							Method checkMethod = checkMe.getMethod(method.getName());
 							if (!compatibleModifiers(method.getModifiers(), checkMethod.getModifiers())) {
-								throw new RequiresStaticException(String.format("%s requires method %s as in %s", checkMe.getCanonicalName(), makeSignature(method), templateClass.getCanonicalName()));
+								throw new RequiresStaticException(String.format(S_REQUIRES_METHOD_S_AS_IN_S, checkMe.getCanonicalName(), makeSignature(method), templateClass.getCanonicalName()));
 							}
 						} catch (NoSuchMethodException x) {
-							throw new RequiresStaticException(String.format("%s requires method %s as in %s", checkMe.getCanonicalName(), makeSignature(method), templateClass.getCanonicalName()));
+							throw new RequiresStaticException(String.format(S_REQUIRES_METHOD_S_AS_IN_S, checkMe.getCanonicalName(), makeSignature(method), templateClass.getCanonicalName()));
 						}
 					}
 
 				}
 			}
-			return true;
+			foundAny = true;
 		}
-		return false;
+		return foundAny;
 	}
 }
