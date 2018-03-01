@@ -43,7 +43,7 @@ public class MyClass implements InterfaceRequiresStatic {
     }
 
     public static InterfaceRequiresStatic create(String arg) {
-        InterfaceRequiresStatic result = new GoodAttempt();
+        InterfaceRequiresStatic result = new MyClass();
         result.otherMethod(arg);
         return result;
     }
