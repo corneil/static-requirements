@@ -2,9 +2,9 @@ package com.github.corneil.requirements;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 public class RequiresStaticSupport {
 
@@ -28,10 +28,14 @@ public class RequiresStaticSupport {
 	}
 
 	private static Collection<Class<?>> findRequestStaticClass(Class<?> checkMe) {
-		List<Class<?>> result = new ArrayList<>();
-		if (checkMe.isAnnotationPresent(RequiresStatic.class)) {
+		Set<Class<?>> result = new HashSet<>();
+		try {
 			RequiresStatic requiresStatic = checkMe.getAnnotation(RequiresStatic.class);
-			result.add(requiresStatic.value());
+			if (requiresStatic != null) {
+				result.add(requiresStatic.value());
+			}
+		} catch (Throwable x) {
+			// There is no annotation
 		}
 		for (Class<?> cls : checkMe.getInterfaces()) {
 			result.addAll(findRequestStaticClass(cls));

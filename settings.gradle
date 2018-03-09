@@ -1,2 +1,3 @@
 rootProject.name = 'static-requirements'
 
+include 'core', 'tests'

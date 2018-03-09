@@ -32,7 +32,7 @@ public interface InterfaceRequiresStatic {
 ### Implementation
 ```java
 
-public class MyClass implements InterfaceRequiresStatic {
+public class MyClass implements InterfaceRequiresStatic {	
     @Override
     public String someMethod() {
         return null;
@@ -46,7 +46,7 @@ public class MyClass implements InterfaceRequiresStatic {
         InterfaceRequiresStatic result = new MyClass();
         result.otherMethod(arg);
         return result;
-    }
+    }    
 }
 ```
 
