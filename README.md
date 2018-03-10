@@ -62,5 +62,16 @@ if(RequiresStaticSupport.checkClass(MyClass.class)) {
 }
 ```
 
+### Sample Code
+If you want to execute the samples:
+
+The following will build the core.
+`./gradlew :core:build`
+
+The following will compile the tests and should fail.
+`./gradlew :tests:build`
+Edit `core/src/main/resources/META-INF/services/javax.annotation.processing.Processor` and comment the annotation processor to ensure compilation.
+
+
 ### Use
 If anyone is interested in using this let me know by logging an issue or tweeting to me at [@corneil](https://twitter/corneil)

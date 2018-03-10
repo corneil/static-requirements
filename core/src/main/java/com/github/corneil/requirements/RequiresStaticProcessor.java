@@ -2,22 +2,39 @@ package com.github.corneil.requirements;
 
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.RoundEnvironment;
-import javax.annotation.processing.SupportedAnnotationTypes;
-import javax.annotation.processing.SupportedSourceVersion;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.*;
 import javax.lang.model.type.TypeMirror;
 import javax.tools.Diagnostic;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 
-@SupportedAnnotationTypes({"*"})
-@SupportedSourceVersion(SourceVersion.RELEASE_8)
 public class RequiresStaticProcessor extends AbstractProcessor {
 	Set<String> processed = new ConcurrentSkipListSet<>();
+	Map<String, Set<String>> mapped = new ConcurrentHashMap<>();
 	private static final boolean debug = Boolean.parseBoolean(System.getProperty("static.processor.debug", "false"));
+
+	@Override
+	public Set<String> getSupportedAnnotationTypes() {
+		Set<String> result = new HashSet<>();
+		result.add(RequiresStatic.class.getCanonicalName());
+		return result;
+	}
+
+	@Override
+	public SourceVersion getSupportedSourceVersion() {
+		String current = System.getProperty("java.version");
+		for (SourceVersion version : SourceVersion.values()) {
+			if (current.equals(version.name())) {
+				return version;
+			}
+		}
+		return SourceVersion.latestSupported();
+	}
 
 	@Override
 	public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
@@ -25,12 +42,13 @@ public class RequiresStaticProcessor extends AbstractProcessor {
 			System.out.println("process:" + annotations + ":" + roundEnv);
 		}
 		boolean failure = false;
+
 		for (final Element element : roundEnv.getRootElements()) {
-			if (checkElement(roundEnv, element)) {
+			if (!checkElement(roundEnv, element)) {
 				failure = true;
 			}
 			for (Element enclosed : element.getEnclosedElements()) {
-				if (checkElement(roundEnv, enclosed)) {
+				if (!checkElement(roundEnv, enclosed)) {
 					failure = true;
 				}
 			}
@@ -47,10 +65,10 @@ public class RequiresStaticProcessor extends AbstractProcessor {
 				checkClass((TypeElement) element, roundEnv);
 			} catch (RequiresStaticException e) {
 				processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, e.toString());
-				return true;
+				return false;
 			}
 		}
-		return false;
+		return true;
 	}
 
 	private void checkClass(TypeElement element, RoundEnvironment roundEnv) throws RequiresStaticException {
@@ -59,9 +77,13 @@ public class RequiresStaticProcessor extends AbstractProcessor {
 		}
 		if (!processed.contains(element.getSimpleName().toString())) {
 			processed.add(element.getSimpleName().toString());
+
 			Set<String> classes = findRequiresStaticTemplate(element);
-			if(debug) {
+			if (debug) {
 				System.out.println("checkClass:templateClasses:" + classes);
+			}
+			if (!classes.isEmpty()) {
+				mapped.put(element.getSimpleName().toString(), classes);
 			}
 			for (String clsName : classes) {
 				TypeElement templateClass = this.processingEnv.getElementUtils().getTypeElement(clsName);
@@ -77,6 +99,9 @@ public class RequiresStaticProcessor extends AbstractProcessor {
 	private void checkWithTemplate(TypeElement templateClass, TypeElement checkClass) throws RequiresStaticException {
 		for (Element element : templateClass.getEnclosedElements()) {
 			if (element.getKind().equals(ElementKind.METHOD) && element.getModifiers().contains(Modifier.STATIC)) {
+				if (debug) {
+					System.out.println("checkWithTemplate:" + element);
+				}
 				if (!checkHasMethod(checkClass, (ExecutableElement) element)) {
 					throw new RequiresStaticException(String.format("%s requires method %s as in %s", checkClass.getQualifiedName(), element.getSimpleName(), templateClass.getQualifiedName()));
 				}
@@ -146,19 +171,47 @@ public class RequiresStaticProcessor extends AbstractProcessor {
 	private Set<String> findRequiresStaticTemplate(TypeElement typeElement) {
 		Set<String> result = new HashSet<>();
 		if (typeElement != null) {
+			if (debug) {
+				System.out.println("findRequiresStaticTemplate:" + typeElement);
+			}
 			for (TypeMirror itf : typeElement.getInterfaces()) {
 				if (debug) {
-					System.out.println("findRequiresStaticTemplate:" + itf);
+					System.out.println("findRequiresStaticTemplate:interfaces:" + itf);
 				}
-				RequiresStatic requiresStatic = itf.getAnnotation(RequiresStatic.class);
-				if (requiresStatic != null) {
-					result.add(requiresStatic.getClass().getCanonicalName());
+				String requiresTemplate = findTemplate(itf);
+				if (requiresTemplate != null) {
+					result.add(requiresTemplate);
 				}
-			}
-			if (typeElement.getSuperclass() != null) {
-				result.addAll(findRequiresStaticTemplate((TypeElement) processingEnv.getTypeUtils().asElement(typeElement.getSuperclass())));
 			}
 		}
 		return result;
+	}
+
+	private String findTemplate(TypeMirror itf) {
+		if (debug) {
+			System.out.println("findTemplate:itf=" + itf);
+		}
+		TypeElement interfaceElement = (TypeElement) processingEnv.getTypeUtils().asElement(itf);
+		List<? extends AnnotationMirror> annotationMirrors = processingEnv.getElementUtils().getAllAnnotationMirrors(interfaceElement);
+		if (debug) {
+			System.out.println("findTemplate:annotationMirrors=" + annotationMirrors);
+		}
+		for (AnnotationMirror annotationMirror : annotationMirrors) {
+			if (annotationMirror.getAnnotationType().toString().equals(RequiresStatic.class.getCanonicalName())) {
+				for (Map.Entry<? extends ExecutableElement, ? extends AnnotationValue> entry : annotationMirror.getElementValues().entrySet()) {
+					if (entry.getKey().toString().equals("value()")) {
+						return strip(entry.getValue().toString(), ".class");
+					}
+				}
+			}
+		}
+		return null;
+	}
+
+	private String strip(String s1, String s2) {
+		if (s1.endsWith(s2)) {
+			return s1.substring(0, s1.length() - s2.length());
+		}
+		return s1;
 	}
 }
