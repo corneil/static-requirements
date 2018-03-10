@@ -88,7 +88,7 @@ public class RequiresStaticProcessor extends AbstractProcessor {
 			for (String clsName : classes) {
 				TypeElement templateClass = this.processingEnv.getElementUtils().getTypeElement(clsName);
 				if (templateClass == null) {
-					processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, String.format("Cannot find element for %s", clsName));
+					processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, String.format("Cannot find element for '%s'", clsName));
 				} else {
 					checkWithTemplate(templateClass, (TypeElement) element);
 				}
@@ -103,7 +103,7 @@ public class RequiresStaticProcessor extends AbstractProcessor {
 					System.out.println("checkWithTemplate:" + element);
 				}
 				if (!checkHasMethod(checkClass, (ExecutableElement) element)) {
-					throw new RequiresStaticException(String.format("%s requires method %s as in %s", checkClass.getQualifiedName(), element.getSimpleName(), templateClass.getQualifiedName()));
+					throw new RequiresStaticException(String.format("'%s' requires method '%s' as in'%s'", checkClass.getQualifiedName(), element.getSimpleName(), templateClass.getQualifiedName()));
 				}
 			}
 		}
