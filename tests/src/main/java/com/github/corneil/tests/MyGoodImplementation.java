@@ -7,7 +7,7 @@ public class MyGoodImplementation implements MyInterface {
 
 	@Override
 	public void doSomeThing() {
-
+		// only illustrative
 	}
 
 	@Override
