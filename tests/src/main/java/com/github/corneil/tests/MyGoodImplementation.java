@@ -1,6 +1,10 @@
 package com.github.corneil.tests;
 
 public class MyGoodImplementation implements MyInterface {
+	public static MyInterface create() {
+		return new MyGoodImplementation();
+	}
+
 	@Override
 	public void doSomeThing() {
 
@@ -9,9 +13,5 @@ public class MyGoodImplementation implements MyInterface {
 	@Override
 	public String getSomething() {
 		return "something";
-	}
-
-	public static MyInterface create() {
-		return new MyGoodImplementation();
 	}
 }

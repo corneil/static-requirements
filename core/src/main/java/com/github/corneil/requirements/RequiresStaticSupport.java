@@ -8,7 +8,29 @@ import java.util.Set;
 
 public class RequiresStaticSupport {
 
-	public static final String S_REQUIRES_METHOD_S_AS_IN_S = "%s requires method \"%s\" as in %s";
+	/**
+	 * This method can be used to verify the requirement that a class implements static methods like a supplied template class.
+	 *
+	 * @param The class to check for @RequiresStatic annotations
+	 * @return true if the class hierarchy has one or RequireStatic annotations and each of their requirements are met.
+	 * 			Will return false if the class has no annotations.
+	 * @throws RequiresStaticException if any of the requirements are not met.
+	 * @see RequiresStatic
+	 */
+	public static boolean checkClass(Class<?> checkMe) throws RequiresStaticException {
+		boolean foundAny = false;
+		for (Class<?> templateClass : findRequestStaticClass(checkMe)) {
+			for (Method method : templateClass.getMethods()) {
+				if (Modifier.isStatic(method.getModifiers())) {
+					checkMethod(checkMe, method, templateClass);
+				}
+			}
+			foundAny = true;
+		}
+		return foundAny;
+	}
+
+	private static final String REQUIRES_METHOD = "%s requires method \"%s\" as in %s";
 
 	private RequiresStaticSupport() {
 	}
@@ -45,43 +67,25 @@ public class RequiresStaticSupport {
 		}
 		return result;
 	}
-
-	/**
-	 * This method can be used to verify the requirement that a class implements static methods like a supplied template class.
-	 *
-	 * @param checkMe
-	 * @return true if the class hierarchy has one or RequireStatic annotations and each of their requirements are met. Will return false if the class has no annotations.
-	 * @throws RequiresStaticException if any of the requirements are not met.
-	 */
-	public static boolean checkClass(Class<?> checkMe) throws RequiresStaticException {
-		boolean foundAny = false;
-		for (Class<?> templateClass : findRequestStaticClass(checkMe)) {
-			for (Method method : templateClass.getMethods()) {
-				if (Modifier.isStatic(method.getModifiers())) {
-					if (method.getParameterTypes() != null && method.getParameterTypes().length > 0) {
-						try {
-							Method checkMethod = checkMe.getMethod(method.getName(), method.getParameterTypes());
-							if (!compatibleModifiers(method.getModifiers(), checkMethod.getModifiers())) {
-								throw new RequiresStaticException(String.format(S_REQUIRES_METHOD_S_AS_IN_S, checkMe.getCanonicalName(), method.toGenericString(), templateClass.getCanonicalName()));
-							}
-						} catch (NoSuchMethodException x) {
-							throw new RequiresStaticException(String.format(S_REQUIRES_METHOD_S_AS_IN_S, checkMe.getCanonicalName(), method.toGenericString(), templateClass.getCanonicalName()));
-						}
-					} else {
-						try {
-							Method checkMethod = checkMe.getMethod(method.getName());
-							if (!compatibleModifiers(method.getModifiers(), checkMethod.getModifiers())) {
-								throw new RequiresStaticException(String.format(S_REQUIRES_METHOD_S_AS_IN_S, checkMe.getCanonicalName(), method.toGenericString(), templateClass.getCanonicalName()));
-							}
-						} catch (NoSuchMethodException x) {
-							throw new RequiresStaticException(String.format(S_REQUIRES_METHOD_S_AS_IN_S, checkMe.getCanonicalName(), method.toGenericString(), templateClass.getCanonicalName()));
-						}
-					}
-
+	private static void checkMethod(Class<?> checkMe, Method method, Class<?> templateClass) throws RequiresStaticException {
+		if (method.getParameterTypes() != null && method.getParameterTypes().length > 0) {
+			try {
+				Method checkMethod = checkMe.getMethod(method.getName(), method.getParameterTypes());
+				if (!compatibleModifiers(method.getModifiers(), checkMethod.getModifiers())) {
+					throw new RequiresStaticException(String.format(REQUIRES_METHOD, checkMe.getCanonicalName(), method.toGenericString(), templateClass.getCanonicalName()));
 				}
+			} catch (NoSuchMethodException x) {
+				throw new RequiresStaticException(String.format(REQUIRES_METHOD, checkMe.getCanonicalName(), method.toGenericString(), templateClass.getCanonicalName()));
 			}
-			foundAny = true;
+		} else {
+			try {
+				Method checkMethod = checkMe.getMethod(method.getName());
+				if (!compatibleModifiers(method.getModifiers(), checkMethod.getModifiers())) {
+					throw new RequiresStaticException(String.format(REQUIRES_METHOD, checkMe.getCanonicalName(), method.toGenericString(), templateClass.getCanonicalName()));
+				}
+			} catch (NoSuchMethodException x) {
+				throw new RequiresStaticException(String.format(REQUIRES_METHOD, checkMe.getCanonicalName(), method.toGenericString(), templateClass.getCanonicalName()));
+			}
 		}
-		return foundAny;
 	}
 }

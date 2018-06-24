@@ -1,4 +1,4 @@
-group 'com.gitbug.corneil'
+group 'com.gitbug.corneil.requirements'
 version '1.0-SNAPSHOT'
 
 subprojects {
@@ -18,7 +18,7 @@ project(':core') {
         testCompile group: 'junit', name: 'junit', version: '4.12'
     }
 }
-
+// This build should fail with a compile error.
 project(':tests') {
     apply plugin: 'application'
 
@@ -26,5 +26,27 @@ project(':tests') {
 
     dependencies {
         compile project(':core')
+    }
+
+    compileJava {
+        options.fork = false
+        options.verbose = true
+        def remoteDebug = System.getenv('REMOTE_DEBUG') ?: '0'
+        if (remoteDebug.toInteger() != 0) {
+            options.fork = true
+            options.forkOptions.with {
+                def agentLibOptions = ['-agentlib:jdwp=transport=dt_socket']
+                agentLibOptions << 'suspend=y'
+                if (remoteDebug.toInteger() == 1) {
+                    agentLibOptions << 'server=y'
+                } else {
+                    agentLibOptions << 'server=n'
+                }
+                agentLibOptions << 'address=7777'
+                jvmArgs += ['-Dstatic.processor.debug=true','-Xdebug', agentLibOptions.join(',')]
+                memoryInitialSize = '64m'
+                memoryMaximumSize = '256m'
+            }
+        }
     }
 }

@@ -56,7 +56,7 @@ public class RequiresStaticTest {
 		try {
 			Assert.assertFalse(RequiresStaticSupport.checkClass(BadAttempt.class));
 		} catch (RequiresStaticException x) {
-			System.err.println("Expected:" + x.toString());
+			System.err.println(String.format("Expected:%s", x));
 			throw x;
 		}
 	}
