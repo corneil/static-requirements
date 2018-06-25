@@ -30,7 +30,7 @@ project(':tests') {
 
     compileJava {
         options.fork = false
-        options.verbose = true
+        options.verbose = false
         def remoteDebug = System.getenv('REMOTE_DEBUG') ?: '0'
         if (remoteDebug.toInteger() != 0) {
             options.fork = true
